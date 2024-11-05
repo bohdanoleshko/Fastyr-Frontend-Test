@@ -80,7 +80,7 @@ export default function UsersPage() {
         {data.users.data.map((user: User) => (
           <Card key={user.id} className="p-4">
             <h2 className="font-semibold">{user.name}</h2>
-            <p>{user.email}</p>
+            <p className="mt-3 mb-3">{user.email}</p>
             <Button onClick={() => router.push(`/users/${user.id}`)}>View Details</Button>
           </Card>
         ))}
