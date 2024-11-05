@@ -1,11 +1,10 @@
-"use client"; // Ensure this is a client component
-import React from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, gql } from "@apollo/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 
 const GET_ALBUM = gql`
   query GetAlbum($id: ID!) {
@@ -33,17 +32,14 @@ const DELETE_ALBUM = gql`
     deleteAlbum(id: $id)
   }
 `;
-interface AlbumDetailPageProps {
-    params: {
-      id: string; 
-    };
-  }
-  
-  export default function AlbumDetailPage({ params }: AlbumDetailPageProps) {
-    const router = useRouter();
-    const { id } = React.use(params);
 
- 
+interface AlbumDetailPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function AlbumDetailPage({ params }: AlbumDetailPageProps) {
+  const router = useRouter();
+  const [id, setId] = useState<string | null>(null);
   const { data, loading, error } = useQuery(GET_ALBUM, { 
     variables: { id }, 
     skip: !id 
@@ -54,16 +50,18 @@ interface AlbumDetailPageProps {
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
-  
-  if (loading) return <p>Loading...</p>;
+  // Use useEffect to resolve the id from params
+  useEffect(() => {
+    params.then((resolvedParams) => {
+      setId(resolvedParams.id);
+    });
+  }, [params]);
 
-  
+  if (loading) return <p>Loading...</p>;
   if (error) return <p>Error loading album details</p>;
 
-  
   const album = data?.album;
 
-  
   if (!album) {
     return <p>Album not found.</p>;
   }
@@ -71,12 +69,12 @@ interface AlbumDetailPageProps {
   const handleUpdate = async () => {
     await updateAlbum({ variables: { id: album.id, title: newTitle } });
     setDialogOpen(false);
-    window.location.href = window.location.href; 
+    window.location.href = window.location.href; // Reload the page to reflect changes
   };
 
   const handleDelete = async () => {
     await deleteAlbum({ variables: { id: album.id } });
-    router.push('/albums'); 
+    router.push('/albums'); // Navigate back to the albums list after deletion
   };
 
   return (
